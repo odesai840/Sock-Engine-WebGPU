@@ -8,7 +8,6 @@ use winit::{
     window::{WindowBuilder, Icon},
     platform::{
         windows::WindowBuilderExtWindows,
-        
     },
 };
 
