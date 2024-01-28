@@ -1,5 +1,5 @@
-use sock_engine::run;
+use sock_engine;
 
 fn main() {
-    run();
+    sock_engine::main();
 }
