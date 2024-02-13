@@ -2,18 +2,35 @@ use std::borrow::Cow;
 use std::env::current_dir;
 use std::path::Path;
 use relative_path::RelativePath;
-use log::debug;
 
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder, Icon},
+    window::{WindowBuilder, Icon},
     platform::{
         windows::WindowBuilderExtWindows,
     },
 };
 
-async fn run(event_loop: EventLoop<()>, window: Window) {
+pub async fn run(){
+    env_logger::init();
+
+    let event_loop = EventLoop::new().unwrap();
+    let root = current_dir().unwrap();
+    let path = RelativePath::new("resources/sockenginelogo.ico").to_path(&root);
+    let icon = load_icon(path.as_path());
+
+    let window = WindowBuilder::new()
+        .with_title("Sock Engine")
+        .with_maximized(false)
+        .with_resizable(true)
+        .with_window_icon(Some(icon.clone()))
+        .with_taskbar_icon(Some(icon.clone()))
+        .build(&event_loop)
+        .unwrap();
+    
+    event_loop.set_control_flow(ControlFlow::Poll);
+
     let mut size = window.inner_size();
     size.width = size.width.max(1);
     size.height = size.height.max(1);
@@ -150,50 +167,4 @@ fn load_icon(path: &Path) -> Icon {
         (rgba, width, height)
     };
     Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
-}
-
-pub fn main() {
-    #[cfg(target_arch = "wasm32")]
-    {
-        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-        console_log::init().expect("could not initialize logger");
-        wasm_bindgen_futures::spawn_local(run(event_loop, window));
-    }
-    #[cfg(target_arch = "wasm32")]
-    {
-        use wasm_bindgen::JsCast;
-        use winit::platform::web::WindowBuilderExtWebSys;
-        let canvas = web_sys::window()
-            .unwrap()
-            .document()
-            .unwrap()
-            .get_element_by_id("canvas")
-            .unwrap()
-            .dyn_into::<web_sys::HtmlCanvasElement>()
-            .unwrap();
-        builder = builder.with_canvas(Some(canvas));
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        env_logger::init();
-
-        let event_loop = EventLoop::new().unwrap();
-        let root = current_dir().unwrap();
-        let path = RelativePath::new("resources/sockenginelogo.ico").to_path(&root);
-        let icon = load_icon(path.as_path());
-
-        let window = WindowBuilder::new()
-            .with_title("Sock Engine")
-            .with_maximized(true)
-            .with_resizable(true)
-            .with_window_icon(Some(icon.clone()))
-            .with_taskbar_icon(Some(icon.clone()))
-            .build(&event_loop)
-            .unwrap();
-        
-        event_loop.set_control_flow(ControlFlow::Poll);
-
-        pollster::block_on(run(event_loop, window));
-    }
 }
